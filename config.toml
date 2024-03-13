@@ -1,0 +1,26 @@
+[global]
+log_dir = "/tmp/tailscale-mirrorjob" # 日志路径
+ssh_private_key_path = "/home/linqiankai/.ssh/id_rsa"
+
+[tunasync_manager]
+addr = "127.0.0.1"
+port = 9090 # manager监听端口
+data_dir = "/tmp/tunasync" # 数据库文件位置
+
+[tunasync_worker]
+
+[tunasync_worker.global]
+manager_endpoint = "http://192.168.31.113:9090"
+sync_interval = 10 # 同步时间间隔，分钟
+mirror_dir = "/var/www/html" # 同步存放路径
+
+[tunasync_worker.debian]
+port = 9091
+min_version = "1.60.0"
+
+[tunasync_worker.redhat]
+port = 9092
+docker_mirror_dir = "/tmp" # docker volume映射路径
+
+[tunasync_worker.static]
+port = 9093

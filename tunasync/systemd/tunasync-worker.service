@@ -1,0 +1,11 @@
+[Unit]
+Description = TUNA mirrors sync worker
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/tunasync worker -c /etc/tunasync/${WORKER}.conf --with-systemd
+ExecReload=/bin/kill -SIGHUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target
