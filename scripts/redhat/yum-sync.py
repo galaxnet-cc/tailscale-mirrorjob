@@ -171,6 +171,9 @@ def main():
     args.working_dir.mkdir(parents=True, exist_ok=True)
     cache_dir = tempfile.mkdtemp()
 
+    file = open(working_dir / "installer-supported", 'w+')
+    file.close()
+
     def combination_os_comp(arch: str):
         for os in os_list:
             for comp in component_list:

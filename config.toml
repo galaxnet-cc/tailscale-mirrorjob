@@ -11,12 +11,13 @@ data_dir = "/tmp/tunasync" # 数据库文件位置
 
 [tunasync_worker.global]
 manager_endpoint = "http://192.168.31.113:9090"
-sync_interval = 10 # 同步时间间隔，分钟
-mirror_dir = "/var/www/html" # 同步存放路径
+sync_interval = 100 # 同步时间间隔，分钟
+mirror_dir = "/var/www/html/stable" # 同步存放路径
 
 [tunasync_worker.debian]
 port = 9091
 min_version = "1.60.0"
+mirror_url = "http://192.168.31.113"
 
 [tunasync_worker.redhat]
 port = 9092

@@ -142,11 +142,22 @@ def compare_versions(version1, version2):
     else:
         return 0
 
-def apt_mirror(base_url: str, dist: str, repo: str, arch: str, dest_base_dir: Path, min_version: str, deb_set: Dict[str, int])->int:
+def apt_mirror(base_url: str, dist: str, repo: str, arch: str, dest_base_dir: Path, name: str, mirror_url: str, min_version: str, deb_set: Dict[str, int])->int:
     if not dest_base_dir.is_dir():
         print("Destination directory is empty, cannot continue")
         return 1
     print(f"Started mirroring {base_url} {dist}, {repo}, {arch}!", flush=True)
+
+    #
+    file = open(dest_base_dir / "installer-supported", 'w+')
+    file.close()
+    # download GPG key
+    check_and_download(f"{base_url}/{dist}.noarmor.gpg", dest_base_dir / f"{dist}.noarmor.gpg")
+    
+    # write source list
+    if not os.path.exists(dest_base_dir / f"{dist}.{name}-keyring.list"):
+        with open(dest_base_dir / f"{dist}.{name}-keyring.list", 'w') as file:
+            file.write(f"deb [signed-by=/usr/share/keyrings/{name}-archive-keyring.gpg]  {mirror_url} {dist} {repo}")
 
 	# download Release files
     dist_dir,dist_tmp_dir = mkdir_with_dot_tmp(dest_base_dir / "dists" / dist)
@@ -339,6 +350,8 @@ def main():
     parser.add_argument("component", type=str, help="e.g. multiverse,contrib")
     parser.add_argument("arch", type=str, help="e.g. i386,amd64")
     parser.add_argument("working_dir", type=Path, help="working directory")
+    parser.add_argument("name", type=str, help="software name")
+    parser.add_argument("mirror_url", type=str, help="mirror url")
     parser.add_argument("--delete", action='store_true',
                         help='delete unreferenced package files')
     parser.add_argument("--delete-dry-run", action='store_true',
@@ -379,7 +392,7 @@ def main():
     for os, arch_list, comp_list in zip(os_list, arch_lists, component_lists):
         for comp in comp_list:
             for arch in arch_list:
-                if apt_mirror(args.base_url, os, comp, arch, args.working_dir, args.min_version, deb_set=deb_set) != 0:
+                if apt_mirror(args.base_url, os, comp, arch, args.working_dir, args.name, args.mirror_url, args.min_version, deb_set=deb_set) != 0:
                     failed.append((os, comp, arch))
     if len(failed) > 0:
         print(f"Failed APT repos of {args.base_url}: ", failed)

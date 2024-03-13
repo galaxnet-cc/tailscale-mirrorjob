@@ -22,9 +22,10 @@ class TunasyncWorkerGlobalConfig:
         self.mirror_dir = mirror_dir
 
 class DebianWorkerConfig:
-    def __init__(self, port, min_version):
+    def __init__(self, port, min_version, mirror_url):
         self.port = port
         self.min_version = min_version
+        self.mirror_url = mirror_url
 
 class RedhatWorkerConfig:
     def __init__(self, port, docker_mirror_dir):

@@ -77,6 +77,7 @@ class WorkerBase:
         self.ssh_client.scp_put(f"./tunasync/config/worker/{self.name}.conf", f"/etc/tunasync/{self.name}.conf")
         # global
         self.ssh_client.execute_command(f"sed -i 's#\\${{MIRROR_DIR}}#{self.mirror_dir}#g' {self.worker_cfg_path}")
+        self.ssh_client.execute_command(f"rm -rf {self.global_config.log_dir}/*")
         self.ssh_client.execute_command(f"sed -i 's#\\${{LOG_DIR}}#{self.global_config.log_dir}#g' {self.worker_cfg_path}")
         self.ssh_client.execute_command(f"sed -i 's#\\${{SYNC_INTERVAL}}#{self.worker_global_cfg.sync_interval}#g' {self.worker_cfg_path}")
 
@@ -118,6 +119,7 @@ class DebianWorker(WorkerBase):
     def _configure(self):
         super()._configure()
         self.ssh_client.execute_command(f"sed -i 's#\\${{MIN_VERSION}}#{self.config.min_version}#g' {self.worker_cfg_path}")
+        self.ssh_client.execute_command(f"sed -i 's#\\${{MIRROR_URL}}#{self.config.mirror_url}#g' {self.worker_cfg_path}")
 
     def _install_dependencies(self):
         self.ssh_client.scp_put("./scripts/debian/apt-sync.py", "/etc/tunasync/apt-sync.py")
