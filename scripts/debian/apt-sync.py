@@ -148,16 +148,22 @@ def apt_mirror(base_url: str, dist: str, repo: str, arch: str, dest_base_dir: Pa
         return 1
     print(f"Started mirroring {base_url} {dist}, {repo}, {arch}!", flush=True)
 
-    #
-    file = open(dest_base_dir / "installer-supported", 'w+')
-    file.close()
-    # download GPG key
-    check_and_download(f"{base_url}/{dist}.noarmor.gpg", dest_base_dir / f"{dist}.noarmor.gpg")
-    
     # write source list
     if not os.path.exists(dest_base_dir / f"{dist}.{name}-keyring.list"):
         with open(dest_base_dir / f"{dist}.{name}-keyring.list", 'w') as file:
             file.write(f"deb [signed-by=/usr/share/keyrings/{name}-archive-keyring.gpg]  {mirror_url} {dist} {repo}")
+    if not os.path.exists(dest_base_dir / f"{dist}.list"):
+        with open(dest_base_dir / f"{dist}.list", 'w') as file:
+            file.write(f"deb {mirror_url} {dist} {repo}")
+    # create installer-supported
+    if not os.path.exists(dest_base_dir / f"{dist}"):
+        os.makedirs(dest_base_dir / f"{dist}", exist_ok=True)
+        with open(dest_base_dir / f"{dist}/installer-supported", 'w') as file:
+            file.write("OK")
+    # download GPG key
+    check_and_download(f"{base_url}/{dist}.gpg", dest_base_dir / f"{dist}.gpg")
+    check_and_download(f"{base_url}/{dist}.asc", dest_base_dir / f"{dist}.asc")
+    check_and_download(f"{base_url}/{dist}.noarmor.gpg", dest_base_dir / f"{dist}.noarmor.gpg")
 
 	# download Release files
     dist_dir,dist_tmp_dir = mkdir_with_dot_tmp(dest_base_dir / "dists" / dist)
@@ -293,7 +299,7 @@ def apt_mirror(base_url: str, dist: str, repo: str, arch: str, dest_base_dir: Pa
         if dest_filename.is_file() and dest_filename.stat().st_size == pkg_size:
             print(f"Skipping {pkg_filename}, size {pkg_size}")
             continue
-        if compare_versions(pkg_version, min_version) == -1:
+        if arch != 'all' and compare_versions(pkg_version, min_version) == -1:
             print(f"Skipping {pkg_filename}, pkg_version {pkg_version}, min_version {min_version}")
             continue
 

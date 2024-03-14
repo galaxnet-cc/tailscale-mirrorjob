@@ -146,6 +146,7 @@ def main():
     parser.add_argument("arch", type=str, help="e.g. x86_64,aarch64")
     parser.add_argument("repo_name", type=str, help="e.g. @{comp}-el@{os_ver}")
     parser.add_argument("working_dir", type=Path, help="working directory")
+    parser.add_argument("mirror_url", type=str, help="mirror URL")
     parser.add_argument("--download-repodata", action='store_true',
                         help='download repodata files instead of generating them')
     parser.add_argument("--pass-arch-to-reposync", action='store_true',
@@ -171,7 +172,21 @@ def main():
     args.working_dir.mkdir(parents=True, exist_ok=True)
     cache_dir = tempfile.mkdtemp()
 
-    file = open(working_dir / "installer-supported", 'w+')
+    file = open(args.working_dir / "installer-supported", 'w+')
+    file.write("OK")
+    file.close()
+
+    file = open(args.working_dir / f"{args.repo_name}.repo", 'w+')
+    file.write(f'''
+[{args.repo_name}]
+name={args.repo_name}
+baseurl={args.mirror_url}/stable/centos/{os_list[0]}/$basearch/{args.repo_name}
+enabled=1
+type=rpm
+gpgcheck=0
+repo_gpgcheck=0
+
+                   ''')
     file.close()
 
     def combination_os_comp(arch: str):
@@ -182,6 +197,7 @@ def main():
                     'os_ver': os,
                     'comp': comp,
                 }
+
 
                 name = substitute_vars(args.repo_name, vardict)
                 url = substitute_vars(args.base_url, vardict)
@@ -208,11 +224,11 @@ keepcache=0
 [{name}]
 name={name}
 baseurl={url}
+enabled=1
 repo_gpgcheck=0
 gpgcheck=0
-enabled=1
 ''')
-            dst = (args.working_dir / name).absolute()
+            dst = (args.working_dir / arch / name).absolute()
             dst.mkdir(parents=True, exist_ok=True)
             dest_dirs.append(dst)
         conf.flush()
@@ -227,7 +243,7 @@ enabled=1
         cmd_args = [
             "dnf", "reposync", "-n", "--repoid", name,
             "-c", conf.name,
-            "--delete", "-p", str(args.working_dir.absolute())]
+            "--delete", "-p", str((args.working_dir / arch).absolute())]
         if args.pass_arch_to_reposync:
             cmd_args += ["--arch", arch]
         print(f"Launching dnf reposync with command: {cmd_args}", flush=True)

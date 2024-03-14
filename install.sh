@@ -1,4 +1,4 @@
-!/bin/sh
+#!/bin/sh
 
 set -eu
 
@@ -19,16 +19,8 @@ main() {
 	PACKAGETYPE=""
 	APT_KEY_TYPE="" # Only for apt-based distros
 	APT_SYSTEMCTL_START=false # Only needs to be true for Kali
-	TRACK="${TRACK:-stable}"
-
-	case "$TRACK" in
-		stable|unstable)
-			;;
-		*)
-			echo "unsupported track $TRACK"
-			exit 1
-			;;
-	esac
+	TRACK="stable"
+    MIRROR_URL=${MIRROR_URL}
 
 	if [ -f /etc/os-release ]; then
 		# /etc/os-release populates a number of shell variables. We care about the following:
@@ -323,7 +315,7 @@ main() {
 		exit 1
 	fi
 
-	TEST_URL="http://192.168.31.113/"
+	TEST_URL="$MIRROR_URL"
 	RC=0
 	TEST_OUT=$($CURL "$TEST_URL" 2>&1) || RC=$?
 	if [ $RC != 0 ]; then
@@ -338,12 +330,15 @@ main() {
 	# versions we support?
 	OS_UNSUPPORTED=
 	case "$OS" in
-		ubuntu|debian|raspbian|centos|rhel|amazon-linux|opensuse|photon)
+		ubuntu|debian|raspbian|centos)
 			# Check with the package server whether a given version is supported.
-			URL="http://192.168.31.113/$TRACK/$OS/$VERSION/installer-supported"
+			URL="$MIRROR_URL/$TRACK/$OS/$VERSION/installer-supported"
 			$CURL "$URL" 2> /dev/null | grep -q OK || OS_UNSUPPORTED=1
 			;;
-		opensuse)
+		photon)
+			OS_UNSUPPORTED=1
+			;;
+		photon)
 			OS_UNSUPPORTED=1
 			;;
 		opensuse)
@@ -398,7 +393,7 @@ main() {
 			other-linux)
 				echo "Couldn't determine what kind of Linux is running."
 				echo "You could try the static binaries at:"
-				echo "http://192.168.31.113/$TRACK/static"
+				echo "$MIRROR_URL/$TRACK/static"
 				;;
 			"")
 				echo "Couldn't determine what operating system you're running."
@@ -408,7 +403,7 @@ main() {
 				;;
 		esac
 		echo
-		echo "If you'd like us to support your system better, please email support@tailscale.com"
+		echo "If you'd like us to support your system better, please email."
 		echo "and tell us what OS you're running."
 		echo
 		echo "Please include the following information we gathered from your system:"
@@ -466,13 +461,13 @@ main() {
 			set -x
 			$SUDO mkdir -p --mode=0755 /usr/share/keyrings
 			case "$APT_KEY_TYPE" in
-				# legacy)
-				# 	$CURL "http://192.168.31.113/$TRACK/$OS/$VERSION.asc" | $SUDO apt-key add -
-				# 	$CURL "https://192.168.31.113/$TRACK/$OS/$VERSION.list" | $SUDO tee /etc/apt/sources.list.d/tailscale.list
-				# ;;
+				legacy)
+					$CURL "$MIRROR_URL/$TRACK/$OS/$VERSION.asc" | $SUDO apt-key add -
+					$CURL "$MIRROR_URL/$TRACK/$OS/$VERSION.list" | $SUDO tee /etc/apt/sources.list.d/tailscale.list
+				;;
 				keyring)
-					$CURL "http://192.168.31.113/$TRACK/$OS/$VERSION.noarmor.gpg" | $SUDO tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
-					$CURL "http://192.168.31.113/$TRACK/$OS/$VERSION.tailscale-keyring.list" | $SUDO tee /etc/apt/sources.list.d/tailscale-mirror.list
+					$CURL "$MIRROR_URL/$TRACK/$OS/$VERSION.noarmor.gpg" | $SUDO tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+					$CURL "$MIRROR_URL/$TRACK/$OS/$VERSION.tailscale-keyring.list" | $SUDO tee /etc/apt/sources.list.d/tailscale-mirror.list
 				;;
 			esac
 			$SUDO apt-get update
@@ -486,7 +481,7 @@ main() {
 		yum)
 			set -x
 			$SUDO yum install yum-utils -y
-			$SUDO yum-config-manager -y --add-repo "http://192.168.31.113/$TRACK/$OS/$VERSION/tailscale.repo"
+			$SUDO yum-config-manager -y --add-repo "$MIRROR_URL/$TRACK/$OS/$VERSION/tailscale.repo"
 			$SUDO yum install tailscale -y
 			$SUDO systemctl enable --now tailscaled
 			set +x
@@ -494,7 +489,7 @@ main() {
 		dnf)
 			set -x
 			$SUDO dnf install -y 'dnf-command(config-manager)'
-			$SUDO dnf config-manager --add-repo "https://192.168.31.113/$TRACK/$OS/$VERSION/tailscale.repo"
+			$SUDO dnf config-manager --add-repo "$MIRROR_URL/$TRACK/$OS/$VERSION/tailscale.repo"
 			$SUDO dnf install -y tailscale
 			$SUDO systemctl enable --now tailscaled
 			set +x

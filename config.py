@@ -16,16 +16,16 @@ class TunasyncManagerConfig:
         self.data_dir = data_dir
 
 class TunasyncWorkerGlobalConfig:
-    def __init__(self, manager_endpoint, sync_interval, mirror_dir):
+    def __init__(self, manager_endpoint, sync_interval, mirror_dir, mirror_url):
         self.manager_endpoint = manager_endpoint
         self.sync_interval = sync_interval
         self.mirror_dir = mirror_dir
+        self.mirror_url = mirror_url
 
 class DebianWorkerConfig:
-    def __init__(self, port, min_version, mirror_url):
+    def __init__(self, port, min_version):
         self.port = port
         self.min_version = min_version
-        self.mirror_url = mirror_url
 
 class RedhatWorkerConfig:
     def __init__(self, port, docker_mirror_dir):
@@ -37,6 +37,10 @@ class StaticWorkerConfig:
         self.port = port
 
 # custom worker config here
+
+class InstallerConfig:
+    def __init__(self, dir):
+        self.dir = dir
 
 def create_worker_config_dynamic(worker_type, *args, **kwargs):
     class_name = f"{worker_type.capitalize()}WorkerConfig"
@@ -55,6 +59,7 @@ def load(config_path):
     global_config = GlobalConfig(**data['global'])
     tunasync_manager = TunasyncManagerConfig(**data['tunasync_manager'])
     tunasync_worker_global = TunasyncWorkerGlobalConfig(**data['tunasync_worker']['global'])
+    installer = InstallerConfig(**data['installer'])
 
     workers = {'global': tunasync_worker_global}
 
@@ -66,4 +71,4 @@ def load(config_path):
             except ValueError as e:
                 print(f"Error loading worker config for '{worker_type}': {e}")
 
-    return global_config, tunasync_manager, workers
+    return global_config, tunasync_manager, workers, installer
