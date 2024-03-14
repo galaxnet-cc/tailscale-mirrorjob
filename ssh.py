@@ -49,7 +49,7 @@ class ClientManager:
         command = f'mkdir -p {folder_path}'
         result = self.execute_command(command)
         if result is not None:
-            print(f"Folder created: {folder_path}")
+            print(f"Folder created: {folder_path} result: {result}")
     
     def scp_put(self, local_path, remote_path):
         """将本地文件/文件夹复制到远程路径"""

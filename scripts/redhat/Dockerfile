@@ -6,7 +6,7 @@ RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|
 RUN yum -y install dnf && dnf -y install 'dnf-command(reposync)' createrepo_c && yum -y install python3
 
 # Copy the yum-sync script to the container
-COPY ./yum-sync.py /root/
+COPY ./yum-sync.py /usr/local/bin/
 RUN pip3 install requests
 
 # Set the default command

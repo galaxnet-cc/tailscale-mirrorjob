@@ -37,6 +37,7 @@ class Manager:
         self.ssh_client.execute_command(f"sed -i 's#\\${{LISTEN_PORT}}#{self.config.port}#g' {mgr_cfg_path}")
         self.ssh_client.execute_command(f"sed -i 's#\\${{DATA_DIR}}#{self.config.data_dir}#g' {mgr_cfg_path}")
         self.ssh_client.execute_command(f"rm -rf {self.config.data_dir}")
+        self.ssh_client.create_folder(self.config.data_dir)
         mgr_systemd_path = f"{config.systemd_path}/tunasync-manager.service"
         self.ssh_client.scp_put(f"./tunasync/systemd/tunasync-manager.service", mgr_systemd_path)
 
@@ -132,14 +133,10 @@ class RedhatWorker(WorkerBase):
         self.ssh_client.execute_command(f"sed -i 's#\\${{MIRROR_URL}}#{self.worker_global_config.mirror_url}#g' {self.worker_cfg_path}")
 
     def _install_dependencies(self):
-        self.ssh_client.create_folder("/tmp/tunasync/")
-        self.ssh_client.scp_put("./scripts/redhat/Dockerfile", "/tmp/tunasync/Dockerfile")
-        self.ssh_client.scp_put("./scripts/redhat/yum-sync.py", "/tmp/tunasync/yum-sync.py")
-
-        self.ssh_client.execute_command("docker build -t redhat-worker /tmp/tunasync/")
         self.ssh_client.execute_command("docker stop redhat-worker")
         self.ssh_client.execute_command("docker rm redhat-worker")
-        self.ssh_client.execute_command(f"docker run -d -v {self.worker_global_config.mirror_dir}:{self.config.docker_mirror_dir} --name redhat-worker redhat-worker")
+        self.ssh_client.execute_command(f"docker pull {self.config.docker_image}")
+        self.ssh_client.execute_command(f"docker run -d -v {self.worker_global_config.mirror_dir}:{self.config.docker_mirror_dir} --name redhat-worker {self.config.docker_image}")
 
 class StaticWorker(WorkerBase):
     def __init__(self, ssh_client: ssh.ClientManager, global_cfg: config.GlobalConfig, worker_global_cfg: config.TunasyncWorkerGlobalConfig, cfg):

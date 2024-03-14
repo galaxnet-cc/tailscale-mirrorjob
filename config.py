@@ -28,8 +28,9 @@ class DebianWorkerConfig:
         self.min_version = min_version
 
 class RedhatWorkerConfig:
-    def __init__(self, port, docker_mirror_dir):
+    def __init__(self, port, docker_image, docker_mirror_dir):
         self.port = port
+        self.docker_image = docker_image
         self.docker_mirror_dir = docker_mirror_dir
 
 class StaticWorkerConfig:
