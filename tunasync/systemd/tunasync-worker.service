@@ -1,6 +1,6 @@
 [Unit]
 Description = TUNA mirrors sync worker
-After=network.target
+After=tunasync-manager
 
 [Service]
 Type=simple
